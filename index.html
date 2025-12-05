@@ -14,6 +14,17 @@
     
     .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; }
     .coin-display { display: flex; align-items: center; gap: 5px; background: linear-gradient(135deg, #ffd166, #ffb347); padding: 5px 10px; border-radius: 12px; font-family: 'Jua', sans-serif; font-size: 14px; color: #5c4033; }
+    .rent-timer { display: flex; align-items: center; gap: 3px; background: linear-gradient(135deg, #87CEEB, #4682B4); padding: 4px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+    .rent-timer.warning { background: linear-gradient(135deg, #FF6B6B, #EE5A5A); animation: rentPulse 1s infinite; }
+    @keyframes rentPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+    .rent-amount { font-size: 9px; opacity: 0.85; margin-left: 2px; }
+    .game-over-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; }
+    .game-over-screen.show { display: flex; }
+    .game-over-content { background: white; padding: 30px 40px; border-radius: 20px; text-align: center; animation: gameOverPop 0.5s ease; }
+    @keyframes gameOverPop { 0%{transform:scale(0.5);opacity:0} 100%{transform:scale(1);opacity:1} }
+    .game-over-title { font-size: 28px; color: #E74C3C; margin-bottom: 15px; }
+    .game-over-msg { font-size: 16px; color: #666; margin-bottom: 20px; line-height: 1.5; }
+    .game-over-btn { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 30px; border-radius: 25px; font-size: 16px; cursor: pointer; font-family: 'Jua', sans-serif; }
     .coin-icon { font-size: 16px; animation: coinSpin 4s infinite linear; }
     @keyframes coinSpin { 0%,100%{transform:rotateY(0)} 50%{transform:rotateY(180deg)} }
     .level-badge { background: linear-gradient(135deg, var(--accent-purple), #a78bfa); padding: 5px 10px; border-radius: 12px; font-family: 'Jua', sans-serif; font-size: 13px; color: white; }
@@ -129,6 +140,8 @@
     @keyframes falling { 0%{transform:translateY(-60px) rotate(10deg)} 70%{transform:translateY(10px) rotate(-5deg)} 100%{transform:translateY(0) rotate(0)} }
     .character.excited { animation: excited 0.3s ease-in-out 3; }
     @keyframes excited { 0%,100%{transform:translateY(0) rotate(0)} 25%{transform:translateY(-25px) rotate(-10deg)} 75%{transform:translateY(-25px) rotate(10deg)} }
+    .character.exhausted { animation: exhausted 2s infinite ease-in-out; transform: rotate(90deg) translateY(10px); }
+    @keyframes exhausted { 0%,100%{opacity:0.7;transform:rotate(90deg) translateY(10px)} 50%{opacity:0.9;transform:rotate(90deg) translateY(8px)} }
 
     .friend-container { position: absolute; bottom: 70px; display: none; transition: left 2s ease-in-out; z-index: 8; }
     .friend-character { font-size: 55px; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.2)); animation: friendBounce 2s infinite ease-in-out; cursor: pointer; }
@@ -286,6 +299,7 @@
     <div class="hidden" id="playScreen">
       <div class="header">
         <div class="coin-display"><span class="coin-icon">🪙</span><span id="coinCount">50</span></div>
+        <div class="rent-timer"><span class="rent-icon">🏠</span><span id="rentTimer">30:00</span><span class="rent-amount" id="rentAmount">(-100)</span></div>
         <div class="header-buttons">
           <button class="header-btn" id="musicBtn">🔇</button>
           <button class="header-btn" id="resetBtn">🔄</button>
@@ -474,27 +488,27 @@
       {id:'sofa',icon:'🛋️',name:'소파',price:110,effect:'편한 휴식'}
     ];
     const ACCESSORIES=[{id:'hat',icon:'🎩',name:'모자',price:50,type:'hat',exp:20},{id:'crown',icon:'👑',name:'왕관',price:200,type:'hat',exp:50},{id:'ribbon',icon:'🎀',name:'리본',price:40,type:'bow',exp:15},{id:'glasses',icon:'👓',name:'안경',price:60,type:'glasses',exp:25},{id:'sunglasses',icon:'🕶️',name:'선글라스',price:80,type:'glasses',exp:30},{id:'flower',icon:'🌸',name:'꽃',price:30,type:'bow',exp:10}];
-    const MOODS={happy:['너무 좋아! 💕','행복해요~ 🌈','오늘 기분 짱! ⭐','사랑해요! 💖','최고야! 🎉'],normal:['안녕! 👋','뭐해요? 🤔','심심해~ 😐','놀아줘! 🎈','오늘 뭐해? 😊'],hungry:['배고파... 🥺','밥 줘요... 😢','꼬르륵... 🍽️','간식 먹고 싶어!','배에서 소리나... 🥺'],sad:['외로워... 😢','산책 가고 싶어! 🚶','심심해... 😞','밖에 나가자! 🌳','놀아줘... 🥺'],begging:['산책 가자! 🐾','밖에 나가고 싶어! 🌤️','공원 가자~ 🌳','산책! 산책! 🚶','나가자나가자! 🏃'],sleepy:['졸려... 😴','하암~ 🥱','자고 싶어... 💤','눈이 감겨... 😪','꾸벅꾸벅... 💤'],walk:['와! 신난다! 🎉','공원이다! 🌳','산책 최고! 💕','바람이 좋아~ 🍃','하늘이 예뻐! ☁️','꽃 냄새 좋아! 🌸','여기 좋다! 🌿','달리고 싶어! 🏃','나비다! 🦋','새소리 들려! 🐦'],friend:['친구다! 👋','같이 놀자! 🎈','반가워! 💕','안녕 친구! 🤗','우와 누구야? 😮','새 친구다! ✨']};
+    const MOODS={happy:['너무 좋아! 💕','행복해요~ 🌈','오늘 기분 짱! ⭐','사랑해요! 💖','최고야! 🎉'],normal:['안녕! 👋','뭐해요? 🤔','심심해~ 😐','놀아줘! 🎈','오늘 뭐해? 😊'],hungry:['배고파... 🥺','밥 줘요... 😢','꼬르륵... 🍽️','간식 먹고 싶어!','배에서 소리나... 🥺'],sad:['외로워... 😢','산책 가고 싶어! 🚶','심심해... 😞','밖에 나가자! 🌳','놀아줘... 🥺'],begging:['산책 가자! 🐾','밖에 나가고 싶어! 🌤️','공원 가자~ 🌳','산책! 산책! 🚶','나가자나가자! 🏃'],sleepy:['졸려... 😴','하암~ 🥱','자고 싶어... 💤','눈이 감겨... 😪','꾸벅꾸벅... 💤'],exhausted:['힘들어... 😵','못 움직여... 💀','죽겠어... 😩','도와줘... 🆘','너무 힘들어... 😫'],walk:['와! 신난다! 🎉','공원이다! 🌳','산책 최고! 💕','바람이 좋아~ 🍃','하늘이 예뻐! ☁️','꽃 냄새 좋아! 🌸','여기 좋다! 🌿','달리고 싶어! 🏃','나비다! 🦋','새소리 들려! 🐦'],friend:['친구다! 👋','같이 놀자! 🎈','반가워! 💕','안녕 친구! 🤗','우와 누구야? 😮','새 친구다! ✨']};
     const FRIEND_MSGS=['안녕! 👋','놀자놀자! 🎈','반가워~ 💕','좋은 날이야! ☀️','산책 좋아? 🌳','나도 산책중! 🚶','친구하자! 🤝','같이 뛰자! 🏃','여기 자주 와? 😊','오늘 기분 좋아! 🎉'];
     const FRIEND_PLAY_MSGS=['하하! 재밌다! 😆','같이 노니 좋아! 💕','우리 친구야! ✨','신난다! 🎉','또 놀자! 🎈'];
     const QUIZZES=[{q:'가장 좋아하는 색은?',a:['빨강 ❤️','파랑 💙','노랑 💛','초록 💚']},{q:'뭐 하고 놀까?',a:['공놀이 ⚽','숨바꼭질 🙈','달리기 🏃','낮잠 😴']},{q:'어디 가고 싶어?',a:['공원 🌳','바다 🌊','산 ⛰️','집 🏠']},{q:'좋아하는 계절은?',a:['봄 🌸','여름 ☀️','가을 🍂','겨울 ❄️']}];
 
-    let gs={phase:'egg',eggClicks:0,character:null,petName:'',coins:50,hunger:80,happiness:80,exp:0,level:1,stage:0,ownedFurniture:['bed'],ownedAccessories:[],equippedAccessories:{},isSleeping:false,isOutside:false,dustCount:0,dailyPets:0,dailyWalks:0,lastPetDate:'',furniturePos:{},lastSave:Date.now()};
-    const EXP_PER_LEVEL=100,SAVE_KEY='tamagochi_v5';
+    let gs={phase:'egg',eggClicks:0,character:null,petName:'',coins:50,hunger:80,happiness:80,exp:0,level:1,stage:0,ownedFurniture:['bed'],ownedAccessories:[],equippedAccessories:{},isSleeping:false,isOutside:false,dustCount:0,dailyPets:0,dailyWalks:0,lastPetDate:'',furniturePos:{},rentTimer:1800,lastSave:Date.now()};
+    const EXP_PER_LEVEL=100,SAVE_KEY='tamagochi_v6',RENT_INTERVAL=1800;
     let wanderTimer=null,talkTimer=null,decayTimer=null,dustTimer=null;
 
-    const el={eggScreen:document.getElementById('eggScreen'),namingScreen:document.getElementById('namingScreen'),playScreen:document.getElementById('playScreen'),egg:document.getElementById('egg'),eggHint:document.getElementById('eggHint'),newbornChar:document.getElementById('newbornChar'),namingTitle:document.getElementById('namingTitle'),nameInput:document.getElementById('nameInput'),startBtn:document.getElementById('startBtn'),coinCount:document.getElementById('coinCount'),levelNum:document.getElementById('levelNum'),petNameDisplay:document.getElementById('petNameDisplay'),hungerBar:document.getElementById('hungerBar'),hungerText:document.getElementById('hungerText'),happinessBar:document.getElementById('happinessBar'),happinessText:document.getElementById('happinessText'),expBar:document.getElementById('expBar'),expText:document.getElementById('expText'),mainStage:document.getElementById('mainStage'),homeBg:document.getElementById('homeBg'),parkBg:document.getElementById('parkBg'),characterContainer:document.getElementById('characterContainer'),mainCharacter:document.getElementById('mainCharacter'),speechBubble:document.getElementById('speechBubble'),zzzEffect:document.getElementById('zzzEffect'),heartsContainer:document.getElementById('heartsContainer'),friendContainer:document.getElementById('friendContainer'),friendCharacter:document.getElementById('friendCharacter'),friendBubble:document.getElementById('friendBubble'),cleanBadge:document.getElementById('cleanBadge'),dirtyOverlay:document.getElementById('dirtyOverlay'),furnitureBed:document.getElementById('furnitureBed'),furnitureToy:document.getElementById('furnitureToy'),furniturePlant:document.getElementById('furniturePlant'),decoLamp:document.getElementById('decoLamp'),decoShelf:document.getElementById('decoShelf'),decoShelfItems:document.getElementById('decoShelfItems'),decoFrame:document.getElementById('decoFrame'),decoClock:document.getElementById('decoClock'),decoAquarium:document.getElementById('decoAquarium'),decoPiano:document.getElementById('decoPiano'),decoMirror:document.getElementById('decoMirror'),decoTv:document.getElementById('decoTv'),decoSofa:document.getElementById('decoSofa'),growthLineFill:document.getElementById('growthLineFill'),stageIcon0:document.getElementById('stageIcon0'),stageIcon1:document.getElementById('stageIcon1'),stageIcon2:document.getElementById('stageIcon2'),stage0:document.getElementById('stage0'),stage1:document.getElementById('stage1'),stage2:document.getElementById('stage2'),currentLevel:document.getElementById('currentLevel'),levelBonus:document.getElementById('levelBonus'),feedBtn:document.getElementById('feedBtn'),playBtn:document.getElementById('playBtn'),walkBtn:document.getElementById('walkBtn'),shopBtn:document.getElementById('shopBtn'),musicBtn:document.getElementById('musicBtn'),resetBtn:document.getElementById('resetBtn'),shopModal:document.getElementById('shopModal'),closeShopBtn:document.getElementById('closeShopBtn'),playModal:document.getElementById('playModal'),closePlayBtn:document.getElementById('closePlayBtn'),allowanceProblem:document.getElementById('allowanceProblem'),allowanceInput:document.getElementById('allowanceInput'),allowanceSubmit:document.getElementById('allowanceSubmit'),allowanceResult:document.getElementById('allowanceResult'),foodItems:document.getElementById('foodItems'),furnitureItems:document.getElementById('furnitureItems'),accessoryItems:document.getElementById('accessoryItems'),toast:document.getElementById('toast'),rpsCharacter:document.getElementById('rpsCharacter'),rpsResult:document.getElementById('rpsResult'),rpsWins:document.getElementById('rpsWins'),rpsExp:document.getElementById('rpsExp'),catchArea:document.getElementById('catchArea'),catchTarget:document.getElementById('catchTarget'),catchScore:document.getElementById('catchScore'),catchStart:document.getElementById('catchStart'),quizQuestion:document.getElementById('quizQuestion'),quizOptions:document.getElementById('quizOptions'),quizResult:document.getElementById('quizResult')};
+    const el={eggScreen:document.getElementById('eggScreen'),namingScreen:document.getElementById('namingScreen'),playScreen:document.getElementById('playScreen'),egg:document.getElementById('egg'),eggHint:document.getElementById('eggHint'),newbornChar:document.getElementById('newbornChar'),namingTitle:document.getElementById('namingTitle'),nameInput:document.getElementById('nameInput'),startBtn:document.getElementById('startBtn'),coinCount:document.getElementById('coinCount'),rentTimer:document.getElementById('rentTimer'),rentAmount:document.getElementById('rentAmount'),gameOverScreen:document.getElementById('gameOverScreen'),gameOverMsg:document.getElementById('gameOverMsg'),levelNum:document.getElementById('levelNum'),petNameDisplay:document.getElementById('petNameDisplay'),hungerBar:document.getElementById('hungerBar'),hungerText:document.getElementById('hungerText'),happinessBar:document.getElementById('happinessBar'),happinessText:document.getElementById('happinessText'),expBar:document.getElementById('expBar'),expText:document.getElementById('expText'),mainStage:document.getElementById('mainStage'),homeBg:document.getElementById('homeBg'),parkBg:document.getElementById('parkBg'),characterContainer:document.getElementById('characterContainer'),mainCharacter:document.getElementById('mainCharacter'),speechBubble:document.getElementById('speechBubble'),zzzEffect:document.getElementById('zzzEffect'),heartsContainer:document.getElementById('heartsContainer'),friendContainer:document.getElementById('friendContainer'),friendCharacter:document.getElementById('friendCharacter'),friendBubble:document.getElementById('friendBubble'),cleanBadge:document.getElementById('cleanBadge'),dirtyOverlay:document.getElementById('dirtyOverlay'),furnitureBed:document.getElementById('furnitureBed'),furnitureToy:document.getElementById('furnitureToy'),furniturePlant:document.getElementById('furniturePlant'),decoLamp:document.getElementById('decoLamp'),decoShelf:document.getElementById('decoShelf'),decoShelfItems:document.getElementById('decoShelfItems'),decoFrame:document.getElementById('decoFrame'),decoClock:document.getElementById('decoClock'),decoAquarium:document.getElementById('decoAquarium'),decoPiano:document.getElementById('decoPiano'),decoMirror:document.getElementById('decoMirror'),decoTv:document.getElementById('decoTv'),decoSofa:document.getElementById('decoSofa'),growthLineFill:document.getElementById('growthLineFill'),stageIcon0:document.getElementById('stageIcon0'),stageIcon1:document.getElementById('stageIcon1'),stageIcon2:document.getElementById('stageIcon2'),stage0:document.getElementById('stage0'),stage1:document.getElementById('stage1'),stage2:document.getElementById('stage2'),currentLevel:document.getElementById('currentLevel'),levelBonus:document.getElementById('levelBonus'),feedBtn:document.getElementById('feedBtn'),playBtn:document.getElementById('playBtn'),walkBtn:document.getElementById('walkBtn'),shopBtn:document.getElementById('shopBtn'),musicBtn:document.getElementById('musicBtn'),resetBtn:document.getElementById('resetBtn'),shopModal:document.getElementById('shopModal'),closeShopBtn:document.getElementById('closeShopBtn'),playModal:document.getElementById('playModal'),closePlayBtn:document.getElementById('closePlayBtn'),allowanceProblem:document.getElementById('allowanceProblem'),allowanceInput:document.getElementById('allowanceInput'),allowanceSubmit:document.getElementById('allowanceSubmit'),allowanceResult:document.getElementById('allowanceResult'),foodItems:document.getElementById('foodItems'),furnitureItems:document.getElementById('furnitureItems'),accessoryItems:document.getElementById('accessoryItems'),toast:document.getElementById('toast'),rpsCharacter:document.getElementById('rpsCharacter'),rpsResult:document.getElementById('rpsResult'),rpsWins:document.getElementById('rpsWins'),rpsExp:document.getElementById('rpsExp'),catchArea:document.getElementById('catchArea'),catchTarget:document.getElementById('catchTarget'),catchScore:document.getElementById('catchScore'),catchStart:document.getElementById('catchStart'),quizQuestion:document.getElementById('quizQuestion'),quizOptions:document.getElementById('quizOptions'),quizResult:document.getElementById('quizResult')};
 
     function toast(msg){el.toast.textContent=msg;el.toast.classList.add('show');setTimeout(()=>el.toast.classList.remove('show'),2000);}
     function say(text,dur){el.speechBubble.textContent=text;el.speechBubble.classList.add('show');setTimeout(()=>el.speechBubble.classList.remove('show'),dur||2500);}
-    function getMood(){if(gs.isSleeping)return'sleepy';if(gs.isOutside)return'walk';if(gs.hunger<30)return'hungry';if(gs.happiness<30)return'sad';if(gs.happiness<45)return'begging';if(gs.happiness>80&&gs.hunger>60)return'happy';return'normal';}
+    function getMood(){if(gs.isSleeping)return'sleepy';if(gs.hunger<=20||gs.happiness<=20)return'exhausted';if(gs.isOutside)return'walk';if(gs.hunger<30)return'hungry';if(gs.happiness<30)return'sad';if(gs.happiness<45)return'begging';if(gs.happiness>80&&gs.hunger>60)return'happy';return'normal';}
     function getRandomMsg(mood){const msgs=MOODS[mood||getMood()];return msgs[Math.floor(Math.random()*msgs.length)];}
     function setAnim(anim,dur){const c=el.mainCharacter;c.className='character stage-'+gs.stage;if(anim){c.classList.add(anim);if(dur)setTimeout(()=>c.classList.remove(anim),dur);}}
     function spawnHearts(){el.heartsContainer.innerHTML='';for(let i=0;i<4;i++){const h=document.createElement('span');h.className='heart';h.textContent=['❤️','💕','💖','💗'][i];h.style.left=((Math.random()-0.5)*40)+'px';h.style.animationDelay=(i*0.07)+'s';el.heartsContainer.appendChild(h);}setTimeout(()=>el.heartsContainer.innerHTML='',700);}
     function spawnEffect(emoji,x,y){const e=document.createElement('div');e.className='effect';e.textContent=emoji;e.style.left=x+'px';e.style.bottom=y+'px';e.style.fontSize='22px';el.mainStage.appendChild(e);setTimeout(()=>e.remove(),500);}
 
     function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({...gs,lastSave:Date.now()}));}catch(e){}}
-    function load(){try{const d=localStorage.getItem(SAVE_KEY);if(d){const saved=JSON.parse(d);const mins=(Date.now()-saved.lastSave)/60000;const decay=Math.min(40,Math.floor(mins/2));const dustGain=Math.min(5,Math.floor(mins/10));gs={...gs,...saved};gs.hunger=Math.max(0,gs.hunger-decay);gs.happiness=Math.max(0,gs.happiness-Math.floor(decay*0.7));gs.dustCount=Math.min(8,gs.dustCount+dustGain);const today=new Date().toDateString();if(gs.lastPetDate!==today){gs.dailyPets=0;gs.dailyWalks=0;gs.lastPetDate=today;}return true;}}catch(e){}return false;}
+    function load(){try{const d=localStorage.getItem(SAVE_KEY);if(d){const saved=JSON.parse(d);const secs=Math.floor((Date.now()-saved.lastSave)/1000);const mins=secs/60;const decay=Math.min(40,Math.floor(mins/2));const dustGain=Math.min(5,Math.floor(mins/10));gs={...gs,...saved};gs.hunger=Math.max(0,gs.hunger-decay);gs.happiness=Math.max(0,gs.happiness-Math.floor(decay*0.7));gs.dustCount=Math.min(8,gs.dustCount+dustGain);gs.rentTimer=Math.max(0,(gs.rentTimer||RENT_INTERVAL)-secs);const today=new Date().toDateString();if(gs.lastPetDate!==today){gs.dailyPets=0;gs.dailyWalks=0;gs.lastPetDate=today;}return true;}}catch(e){}return false;}
     function resetGame(){if(confirm('정말 처음부터 다시 시작할까요?')){localStorage.removeItem(SAVE_KEY);location.reload();}}
 
     function spawnDust(){if(gs.isOutside||gs.dustCount>=8)return;gs.dustCount++;const dust=document.createElement('div');dust.className='dust';dust.textContent=['🧹','💨','🌫️','✨'][Math.floor(Math.random()*4)];dust.style.left=(15+Math.random()*70)+'%';dust.style.bottom=(30+Math.random()*25)+'%';dust.onclick=()=>cleanDust(dust);el.mainStage.appendChild(dust);updateDirtyOverlay();}
@@ -608,10 +622,76 @@
       setTimeout(()=>{el.friendCharacter.classList.remove('playing');el.friendCharacter.classList.add('walking');},1000);
     });
 
+    // 집세 시스템
+    const BASE_RENT=100;
+    let rentCountdown=null;
+    
+    function getRentAmount(){
+      // 레벨당 5% 할인 (최대 50%)
+      const discount=Math.min(0.5,gs.level*0.05);
+      return Math.floor(BASE_RENT*(1-discount));
+    }
+    
+    function updateRentDisplay(){
+      const mins=Math.floor(gs.rentTimer/60);
+      const secs=gs.rentTimer%60;
+      el.rentTimer.textContent=mins+':'+(secs<10?'0':'')+secs;
+      el.rentAmount.textContent='(-'+getRentAmount()+')';
+      el.rentTimer.parentElement.classList.toggle('warning',gs.rentTimer<=60);
+    }
+    
+    function payRent(){
+      const rent=getRentAmount();
+      if(gs.coins>=rent){
+        gs.coins-=rent;
+        gs.rentTimer=RENT_INTERVAL;
+        toast('🏠 집세 '+rent+'원 납부!');
+        say('집세 냈다! 💸');
+        updateUI();
+      }else{
+        gameOver();
+      }
+    }
+    
+    function startRentTimer(){
+      if(rentCountdown)clearInterval(rentCountdown);
+      rentCountdown=setInterval(()=>{
+        if(gs.phase!=='playing')return;
+        gs.rentTimer--;
+        updateRentDisplay();
+        if(gs.rentTimer<=0){
+          payRent();
+        }
+        // 5분 전 경고
+        if(gs.rentTimer===300){
+          say('집세 낼 시간이 다가온다! 💰');
+          toast('⚠️ 집세 5분 전!');
+        }
+        // 1분 전 경고
+        if(gs.rentTimer===60){
+          say('집세! 돈 있어?! 😰');
+        }
+      },1000);
+    }
+    
+    function gameOver(){
+      clearInterval(rentCountdown);
+      clearInterval(wanderTimer);
+      clearInterval(talkTimer);
+      clearInterval(decayTimer);
+      el.gameOverScreen.classList.add('show');
+      el.gameOverMsg.innerHTML=gs.petName+'와 함께한 시간: '+Math.floor((Date.now()-gs.lastSave)/60000)+'분<br>집세를 내지 못해 쫓겨났어요...';
+    }
+    
+    function restartGame(){
+      localStorage.removeItem(SAVE_KEY);
+      location.reload();
+    }
+
     function addExp(amt){gs.exp+=amt;while(gs.exp>=EXP_PER_LEVEL){gs.exp-=EXP_PER_LEVEL;gs.level++;sfxLevelUp();toast('🎊 레벨 '+gs.level+' 달성!');if(gs.level>=10&&gs.stage<2){gs.stage=2;toast('🌟 어른으로 성장!');}else if(gs.level>=5&&gs.stage<1){gs.stage=1;toast('🌟 어린이로 성장!');}}updateUI();}
     function getCoinBonus(){return 1+(gs.level-1)*0.05;}
 
-    function updateUI(){el.coinCount.textContent=gs.coins;el.levelNum.textContent=gs.level;el.petNameDisplay.textContent=gs.petName;el.hungerBar.style.width=gs.hunger+'%';el.hungerText.textContent=Math.round(gs.hunger)+'%';el.happinessBar.style.width=gs.happiness+'%';el.happinessText.textContent=Math.round(gs.happiness)+'%';el.expBar.style.width=(gs.exp/EXP_PER_LEVEL*100)+'%';el.expText.textContent=gs.exp+'/'+EXP_PER_LEVEL;if(gs.character){let acc='';const hat=ACCESSORIES.find(a=>a.id===gs.equippedAccessories.hat);const glasses=ACCESSORIES.find(a=>a.id===gs.equippedAccessories.glasses);const bow=ACCESSORIES.find(a=>a.id===gs.equippedAccessories.bow);if(hat)acc+='<span class="accessory hat">'+hat.icon+'</span>';if(glasses)acc+='<span class="accessory glasses">'+glasses.icon+'</span>';if(bow)acc+='<span class="accessory bow">'+bow.icon+'</span>';el.mainCharacter.innerHTML=gs.character.stages[gs.stage]+acc;el.mainCharacter.className='character stage-'+gs.stage;el.stageIcon0.textContent=gs.character.stages[0];el.stageIcon1.textContent=gs.character.stages[1];el.stageIcon2.textContent=gs.character.stages[2];el.rpsCharacter.textContent=gs.character.stages[gs.stage];el.catchTarget.textContent=gs.character.stages[gs.stage];}el.growthLineFill.style.width=(gs.stage*50)+'%';[el.stage0,el.stage1,el.stage2].forEach((e,i)=>{e.classList.remove('active','completed');if(i===gs.stage)e.classList.add('active');if(i<gs.stage)e.classList.add('completed');});el.currentLevel.textContent=gs.level;el.levelBonus.textContent='코인 보너스 +'+(Math.floor((gs.level-1)*5))+'%';if(!gs.isOutside){el.furnitureToy.classList.toggle('hidden',!gs.ownedFurniture.includes('toy'));el.furniturePlant.classList.toggle('hidden',!gs.ownedFurniture.includes('plant'));el.decoLamp.classList.toggle('owned',gs.ownedFurniture.includes('lamp'));el.decoShelf.classList.toggle('owned',gs.ownedFurniture.includes('shelf'));el.decoShelfItems.classList.toggle('owned',gs.ownedFurniture.includes('shelf'));el.decoFrame.classList.toggle('owned',gs.ownedFurniture.includes('frame'));el.decoClock.classList.toggle('owned',gs.ownedFurniture.includes('clock'));el.decoAquarium.classList.toggle('owned',gs.ownedFurniture.includes('aquarium'));el.decoPiano.classList.toggle('owned',gs.ownedFurniture.includes('piano'));el.decoMirror.classList.toggle('owned',gs.ownedFurniture.includes('mirror'));el.decoTv.classList.toggle('owned',gs.ownedFurniture.includes('tv'));el.decoSofa.classList.toggle('owned',gs.ownedFurniture.includes('sofa'));}el.zzzEffect.classList.toggle('show',gs.isSleeping);if(gs.isSleeping)setAnim('sleeping');const mood=getMood();if(!gs.isSleeping&&!gs.isOutside){if(mood==='hungry')setAnim('hungry');else if(mood==='sad'||mood==='begging')setAnim('begging');}save();}
+    function updateUI(){el.coinCount.textContent=gs.coins;el.levelNum.textContent=gs.level;el.petNameDisplay.textContent=gs.petName;el.hungerBar.style.width=gs.hunger+'%';el.hungerText.textContent=Math.round(gs.hunger)+'%';el.happinessBar.style.width=gs.happiness+'%';el.happinessText.textContent=Math.round(gs.happiness)+'%';el.expBar.style.width=(gs.exp/EXP_PER_LEVEL*100)+'%';el.expText.textContent=gs.exp+'/'+EXP_PER_LEVEL;updateRentDisplay();if(gs.character){let acc='';const hat=ACCESSORIES.find(a=>a.id===gs.equippedAccessories.hat);const glasses=ACCESSORIES.find(a=>a.id===gs.equippedAccessories.glasses);const bow=ACCESSORIES.find(a=>a.id===gs.equippedAccessories.bow);if(hat)acc+='<span class="accessory hat">'+hat.icon+'</span>';if(glasses)acc+='<span class="accessory glasses">'+glasses.icon+'</span>';if(bow)acc+='<span class="accessory bow">'+bow.icon+'</span>';el.mainCharacter.innerHTML=gs.character.stages[gs.stage]+acc;el.mainCharacter.className='character stage-'+gs.stage;el.stageIcon0.textContent=gs.character.stages[0];el.stageIcon1.textContent=gs.character.stages[1];el.stageIcon2.textContent=gs.character.stages[2];el.rpsCharacter.textContent=gs.character.stages[gs.stage];el.catchTarget.textContent=gs.character.stages[gs.stage];}el.growthLineFill.style.width=(gs.stage*50)+'%';[el.stage0,el.stage1,el.stage2].forEach((e,i)=>{e.classList.remove('active','completed');if(i===gs.stage)e.classList.add('active');if(i<gs.stage)e.classList.add('completed');});el.currentLevel.textContent=gs.level;el.levelBonus.textContent='코인 보너스 +'+(Math.floor((gs.level-1)*5))+'%';if(!gs.isOutside){el.furnitureToy.classList.toggle('hidden',!gs.ownedFurniture.includes('toy'));el.furniturePlant.classList.toggle('hidden',!gs.ownedFurniture.includes('plant'));el.decoLamp.classList.toggle('owned',gs.ownedFurniture.includes('lamp'));el.decoShelf.classList.toggle('owned',gs.ownedFurniture.includes('shelf'));el.decoShelfItems.classList.toggle('owned',gs.ownedFurniture.includes('shelf'));el.decoFrame.classList.toggle('owned',gs.ownedFurniture.includes('frame'));el.decoClock.classList.toggle('owned',gs.ownedFurniture.includes('clock'));el.decoAquarium.classList.toggle('owned',gs.ownedFurniture.includes('aquarium'));el.decoPiano.classList.toggle('owned',gs.ownedFurniture.includes('piano'));el.decoMirror.classList.toggle('owned',gs.ownedFurniture.includes('mirror'));el.decoTv.classList.toggle('owned',gs.ownedFurniture.includes('tv'));el.decoSofa.classList.toggle('owned',gs.ownedFurniture.includes('sofa'));}el.zzzEffect.classList.toggle('show',gs.isSleeping);if(gs.isSleeping)setAnim('sleeping');const mood=getMood();if(!gs.isSleeping&&!gs.isOutside){if(mood==='exhausted')setAnim('exhausted');else if(mood==='hungry')setAnim('hungry');else if(mood==='sad'||mood==='begging')setAnim('begging');}save();}
 
     function startAutoActions(){
       wanderTimer=setInterval(()=>{
@@ -697,7 +777,7 @@
 
     el.egg.addEventListener('click',()=>{sfxClick();gs.eggClicks++;el.eggHint.textContent='터치해서 알을 깨요! ('+gs.eggClicks+'/10)';if(gs.eggClicks>5)el.egg.classList.add('cracking');if(gs.eggClicks>=10){sfxLevelUp();gs.character=CHARACTERS[Math.floor(Math.random()*CHARACTERS.length)];gs.phase='naming';el.eggScreen.classList.add('hidden');el.namingScreen.classList.remove('hidden');el.newbornChar.textContent=gs.character.stages[0];el.namingTitle.textContent=gs.character.name+'가 태어났어요!';save();}});
     el.nameInput.addEventListener('input',()=>{el.startBtn.disabled=!el.nameInput.value.trim();});
-    el.startBtn.addEventListener('click',()=>{if(el.nameInput.value.trim()){gs.petName=el.nameInput.value.trim();gs.phase='playing';gs.lastPetDate=new Date().toDateString();el.namingScreen.classList.add('hidden');el.playScreen.classList.remove('hidden');updateUI();save();toast(gs.petName+'이(가) 태어났어요! 🎉');say('안녕! 나는 '+gs.petName+'야! 💕');sfxLevelUp();startAutoActions();startDustTimer();}});
+    el.startBtn.addEventListener('click',()=>{if(el.nameInput.value.trim()){gs.petName=el.nameInput.value.trim();gs.phase='playing';gs.lastPetDate=new Date().toDateString();gs.rentTimer=RENT_INTERVAL;el.namingScreen.classList.add('hidden');el.playScreen.classList.remove('hidden');updateUI();save();toast(gs.petName+'이(가) 태어났어요! 🎉');say('안녕! 나는 '+gs.petName+'야! 💕');sfxLevelUp();startAutoActions();startDustTimer();startRentTimer();}});
 
     // 캐릭터 터치 - 쓰다듬기와 들어올리기
     let charLiftTimeout=null,isCharLifted=false,isCharTouched=false;
@@ -1022,8 +1102,15 @@
     el.furnitureItems.addEventListener('click',e=>{const item=e.target.closest('.shop-item');if(!item)return;const furn=FURNITURE.find(f=>f.id===item.dataset.furniture);if(!furn||gs.ownedFurniture.includes(furn.id)){if(gs.ownedFurniture.includes(furn?.id))toast('이미 가지고 있어요!');return;}if(gs.coins<furn.price){sfxError();toast('코인이 부족해요!');return;}sfxCoin();gs.coins-=furn.price;gs.ownedFurniture.push(furn.id);toast(furn.name+' 구매!');updateUI();renderShop();});
     el.accessoryItems.addEventListener('click',e=>{const item=e.target.closest('.shop-item');if(!item)return;const acc=ACCESSORIES.find(a=>a.id===item.dataset.accessory);if(!acc)return;if(gs.ownedAccessories.includes(acc.id)){sfxClick();if(gs.equippedAccessories[acc.type]===acc.id){delete gs.equippedAccessories[acc.type];toast(acc.name+' 해제!');}else{gs.equippedAccessories[acc.type]=acc.id;toast(acc.name+' 착용!');}}else{if(gs.coins<acc.price){sfxError();toast('코인이 부족해요!');return;}sfxCoin();gs.coins-=acc.price;gs.ownedAccessories.push(acc.id);gs.equippedAccessories[acc.type]=acc.id;addExp(acc.exp);toast(acc.name+' 구매! 경험치 +'+acc.exp);}updateUI();renderShop();});
 
-    function init(){if(load()){if(gs.phase==='playing'){el.eggScreen.classList.add('hidden');el.playScreen.classList.remove('hidden');updateUI();updateDirtyOverlay();restoreFurniturePos();for(let i=0;i<gs.dustCount;i++){const dust=document.createElement('div');dust.className='dust';dust.textContent=['🧹','💨','🌫️','✨'][Math.floor(Math.random()*4)];dust.style.left=(15+Math.random()*70)+'%';dust.style.bottom=(30+Math.random()*25)+'%';dust.onclick=()=>cleanDust(dust);el.mainStage.appendChild(dust);}startAutoActions();startDustTimer();setTimeout(()=>say(gs.petName+'! 돌아왔구나! 💕'),500);}else if(gs.phase==='naming'){el.eggScreen.classList.add('hidden');el.namingScreen.classList.remove('hidden');el.newbornChar.textContent=gs.character.stages[0];el.namingTitle.textContent=gs.character.name+'가 태어났어요!';}}}
+    function init(){if(load()){if(gs.phase==='playing'){el.eggScreen.classList.add('hidden');el.playScreen.classList.remove('hidden');updateUI();updateDirtyOverlay();restoreFurniturePos();for(let i=0;i<gs.dustCount;i++){const dust=document.createElement('div');dust.className='dust';dust.textContent=['🧹','💨','🌫️','✨'][Math.floor(Math.random()*4)];dust.style.left=(15+Math.random()*70)+'%';dust.style.bottom=(30+Math.random()*25)+'%';dust.onclick=()=>cleanDust(dust);el.mainStage.appendChild(dust);}startAutoActions();startDustTimer();startRentTimer();setTimeout(()=>say(gs.petName+'! 돌아왔구나! 💕'),500);}else if(gs.phase==='naming'){el.eggScreen.classList.add('hidden');el.namingScreen.classList.remove('hidden');el.newbornChar.textContent=gs.character.stages[0];el.namingTitle.textContent=gs.character.name+'가 태어났어요!';}}}
     init();
   </script>
+    <div class="game-over-screen" id="gameOverScreen">
+      <div class="game-over-content">
+        <div class="game-over-title">💔 게임 오버</div>
+        <div class="game-over-msg" id="gameOverMsg">집세를 내지 못해<br>쫓겨났어요...</div>
+        <button class="game-over-btn" onclick="restartGame()">다시 시작하기</button>
+      </div>
+    </div>
 </body>
 </html>
